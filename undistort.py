@@ -5,6 +5,8 @@ import numpy as np
 import os
 from wand.image import Image
 
+ERR_FILE_READ =\
+'Could not read %s'
 ERR_DOT_COUNT =\
 'Number of dots in reference and scanned is different (your scan might be bad)'
 IMG_REFERENCE='reference.png'
@@ -25,6 +27,7 @@ def get_dots(filename):
     """Find the dots in an image."""
 
     img = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
+    assert img is not None, ERR_FILE_READ % filename
 
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = BLOB_MIN_THRESHOLD
