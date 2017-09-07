@@ -15,8 +15,9 @@ LOG_LEVEL='debug'
 
 BLOB_MIN_THRESHOLD=127
 BLOB_MAX_THRESHOLD=255
-BLOB_MIN_AREA=16
+BLOB_MIN_AREA=64
 BLOB_MAX_AREA=255
+WORKING_SIZE=(1700, 2338) # DIN A4 page at 200 dpi
 
 def distance(a, b):
     """Calculate the distance between two points a and b."""
@@ -28,6 +29,9 @@ def get_dots(filename):
 
     img = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
     assert img is not None, ERR_FILE_READ % filename
+
+    img = cv2.resize(img, WORKING_SIZE, interpolation=cv2.INTER_CUBIC)
+    img = cv2.GaussianBlur(img, (5, 5), 0)
 
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = BLOB_MIN_THRESHOLD
