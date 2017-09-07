@@ -44,28 +44,63 @@ def get_dots(filename):
 
     return [kp.pt for kp in keypoints]
 
+def get_dots_bounds(dots):
+    """Returns the bounds of a list of dots."""
+
+    return (
+        min(x for x, y in dots),
+        max(x for x, y in dots),
+        min(y for x, y in dots),
+        max(y for x, y in dots)
+    )
+
+def rescale_dots(a, b):
+    """Scales, offsets and returns a to match the bounds of b."""
+
+    a_left, a_right, a_top, a_bottom = get_dots_bounds(a)
+    b_left, b_right, b_top, b_bottom = get_dots_bounds(b)
+    scale_x = (b_right - b_left) / (a_right - a_left)
+    scale_y = (b_bottom - b_top) / (a_bottom - a_top)
+    return [
+        ((x - a_left) * scale_x + b_left, (y - a_top) * scale_y + b_top)
+        for x, y
+        in a
+    ]
+
 def generate_pairs(reference, scanned):
     """Generate a list of corresponding dots from two images."""
 
     # This might break if the scan is so distorted that
     # the rows or columns begin to overlap
-    reference = get_dots(reference)
-    logging.debug('Found %d reference dots' % len(reference))
+    reference_dots = get_dots(reference)
+    logging.debug('Found %d reference dots' % len(reference_dots))
 
-    scanned = get_dots(scanned)
-    logging.debug('Found %d scanned dots' % len(scanned))
+    scanned_dots = get_dots(scanned)
+    logging.debug('Found %d scanned dots' % len(scanned_dots))
 
-    assert len(reference) == len(scanned), ERR_DOT_COUNT
+    scanned_dots = rescale_dots(scanned_dots, reference_dots)
+
+    assert len(reference_dots) == len(scanned_dots), ERR_DOT_COUNT
 
     pairs = []
-    for rdot in reference:
-        sdot = min(scanned, key=lambda x:distance(rdot, x))
+    for rdot in reference_dots:
+        sdot = min(scanned_dots, key=lambda x:distance(rdot, x))
         pairs.append((rdot, sdot))
 
     return pairs
 
+def scale_pairs(pairs, scale):
+    """"Scale an array of pairs."""
+
+    return [
+        ((rx * scale[0], ry * scale[1]), (sx * scale[0], sy * scale[1]))
+        for (rx, ry), (sx, sy)
+        in pairs
+    ]
+
 def undistort(image, pairs):
-    """Undistort an image"""
+    """Undistort an image."""
+
     arguments = []
     for rdot, sdot in pairs:
         arguments.extend(sdot)
@@ -104,5 +139,10 @@ for i in range(len(input)):
     logging.info('Processing %s' % input[i])
 
     with Image(filename=input[i]) as image:
-        undistort(image, pairs)
+        scale = (
+            image.size[0] / WORKING_SIZE[0],
+            image.size[1] / WORKING_SIZE[1]
+        )
+        scaled_pairs = scale_pairs(pairs, scale)
+        undistort(image, scaled_pairs)
         image.save(filename=output[i])
