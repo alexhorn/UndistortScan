@@ -135,14 +135,14 @@ else:
 logging.info('Generating undistortion map')
 pairs = generate_pairs(args.reference, args.scanned)
 
-for i in range(len(input)):
-    logging.info('Processing %s' % input[i])
+for infile, outfile in zip(input, output):
+    logging.info('Processing %s' % infile)
 
-    with Image(filename=input[i]) as image:
+    with Image(filename=infile) as image:
         scale = (
             image.size[0] / WORKING_SIZE[0],
             image.size[1] / WORKING_SIZE[1]
         )
         scaled_pairs = scale_pairs(pairs, scale)
         undistort(image, scaled_pairs)
-        image.save(filename=output[i])
+        image.save(filename=outfile)
