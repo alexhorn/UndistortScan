@@ -84,6 +84,7 @@ def generate_pairs(reference, scanned):
     pairs = []
     for rdot in rescaled_reference_dots:
         sdot = min(scanned_dots, key=lambda sdot: distance(rdot, sdot))
+        assert all(sdot != x for _, x in pairs)
         pairs.append((rdot, sdot))
 
     return pairs
