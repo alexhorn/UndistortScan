@@ -77,14 +77,13 @@ def generate_pairs(reference, scanned):
 
     scanned_dots = get_dots(scanned)
     logging.debug('Found %d scanned dots' % len(scanned_dots))
-
-    scanned_dots = rescale_dots(scanned_dots, reference_dots)
-
     assert len(reference_dots) == len(scanned_dots), ERR_DOT_COUNT
 
+    rescaled_reference_dots = rescale_dots(reference_dots, scanned_dots)
+
     pairs = []
-    for rdot in reference_dots:
-        sdot = min(scanned_dots, key=lambda x:distance(rdot, x))
+    for rdot in rescaled_reference_dots:
+        sdot = min(scanned_dots, key=lambda sdot: distance(rdot, sdot))
         pairs.append((rdot, sdot))
 
     return pairs
